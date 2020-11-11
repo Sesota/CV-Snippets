@@ -1,0 +1,270 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}">
+  {% if cl.formset %}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">
+  {% endif %}
+  {% if cl.formset or action_form %}
+    <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+  {% endif %}
+  {{ media.css }}
+  {% if not actions_on_top and not actions_on_bottom %}
+    <style>
+        #changelist table thead th:first-child {width: inherit}
+    </style>
+  {% endif %}
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ media.js }}
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-list{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ cl.opts.app_config.verbose_name }}</a>
+&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block coltype %}flex{% endblock %}
+
+{% block content %}
+  <div id="content-main">
+    {% block object-tools %}
+        <ul class="object-tools">
+          {% block object-tools-items %}
+            {% change_list_object_tools %}
+          {% endblock %}
+        </ul>
+    {% endblock %}
+    {% if cl.formset and cl.formset.errors %}
+        <p class="errornote">
+        {% if cl.formset.total_error_count == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+        </p>
+        {{ cl.formset.non_form_errors }}
+    {% endif %}
+    <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+      {% block search %}{% search_form cl %}{% endblock %}
+      {% block date_hierarchy %}{% if cl.date_hierarchy %}{% date_hierarchy cl %}{% endif %}{% endblock %}
+
+      {% block filters %}
+        {% if cl.has_filters %}
+          <div id="changelist-filter">
+            <h2>{% trans 'Filter' %}</h2>
+            {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+          </div>
+        {% endif %}
+      {% endblock %}
+
+      <form id="changelist-form" method="post"{% if cl.formset and cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
+      {% if cl.formset %}
+        <div>{{ cl.formset.management_form }}</div>
+      {% endif %}
+
+      {% block result_list %}
+          {% if action_form and actions_on_top and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+          <style>
+            .daddy-button {
+                display: inline;
+                width: 115px;
+                height: 25px;
+                padding: 5px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: bold;
+                line-height: 25px;
+            }
+            .daddy-red {
+              background: #ba2121;
+              color: white;
+            }
+            .daddy-red:hover, .daddy-red:focus{
+                background: #a41515;
+                color: white;
+            }
+
+            .daddy-blue {
+              background: #79aec8;
+              color: white;
+            }
+            .daddy-blue:hover, .daddy-blue:focus{
+                background: #417690;
+                color: white;centers_list
+            }
+
+            
+          </style>
+          <div class="submit-row" style="margin:20px 5px 30px 5px; ">
+            <a class="daddy-button daddy-blue" onclick="export_json()" style="margin:20px 5px 30px 5px; ">Export JSON</a>
+          </div>
+          <div id="pending" style="display:none;">
+            <h4>pending...</h4>
+          </div>
+           <div id="error" style="display:none;">
+            <h4>error</h4>
+          </div>
+          <div style="width: 70%; background-color:lightgray; margin: 10px;">
+            <div id="percent_bar" style="display:none; width:1%; height:30px; background-color:green; text-align: center; line-height: 30px; color: white;"></div>
+          </div>
+          {% comment %} <div class="submit-row" style="margin:20px 5px 30px 5px; ">
+            <a id="terminate" class="daddy-button" onclick="terminate()" style="margin:20px 5px 30px 5px; display:none;">Cancel</a>
+          </div> {% endcomment %}
+          <div id="messages_bar" style="width:70%; margin: 10px; display:none; padding: 10px;">
+            <ul id="unordered_list">
+            </ul>
+          </div>
+          {% result_list cl %}
+          {% if action_form and actions_on_bottom and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+      {% endblock %}
+      {% block pagination %}{% pagination cl %}{% endblock %}
+      </form>
+    </div>
+  </div>
+
+  <script>
+  // TODO Clean this shit :))
+        var terminated = false;
+        var busy = false;
+
+        // TODO Fix this
+        function term_switch(){
+          terminated = true;
+          return;
+        }
+
+        function output_messages(error_messages, results){
+          box = document.getElementById('messages_bar');
+          unordered_list = document.getElementById('unordered_list');
+          box.style.display = 'block';
+          
+          error_messages.sort(function(a,b){return (a['type']).localeCompare(b['type']);})
+          results.sort(function(a,b){return (a['type']).localeCompare(b['type']);})
+
+          output = "";
+          for(i=0; i<results.length; i++){
+            bg_color = 'lightgreen';
+            font_color = 'darkgreen';
+            output += `<li style="background-color:${bg_color}; color:${font_color}; padding: 2px 5px"; margin: 1px;">${results[i]['type']}: [${results[i]['num']}]</li>\n`;
+          }
+          for(i=0; i<error_messages.length; i++){
+            bg_color = 'indianred';
+            font_color = 'darkred';
+            output += `<li style="background-color:${bg_color}; color:${font_color}; padding: 2px 5px"; margin: 1px;">${error_messages[i]['type']}: [${error_messages[i]['num']}]</li>\n`;
+          }
+          unordered_list.innerHTML = output;
+          busy = false;
+        }
+
+        function progress_bar(percent, color){
+          if (isNaN(percent)){
+            percent = 1
+          }
+          var elem = document.getElementById("percent_bar");
+          //var cross = document.getElementById('terminate');
+          elem.style.display = 'block';
+          //cross.style.display = 'block';
+          width = percent * 100;
+          elem.style.backgroundColor = color;
+          elem.style.width = width + "%";
+          elem.innerHTML = String(parseInt(width)) + "%";
+          if (percent >= 1){
+            elem.style.display = 'none';
+            //cross.style.display = 'none';
+          }
+        }
+        // TODO Fix this
+        function terminate(group_id){
+          url = `/admin/tools/terminator/${group_id}`;
+          console.log(url);
+          fetch(url, {
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+          }).then(function (response) {
+              if (!response.ok) {
+                  document.getElementById('terminate').style.backgroundColor = "lightgrey";
+                  throw new Error("Not 2xx response");
+              }
+              response.json().then(function (data) {
+              console.log(data);
+              busy = false
+            });
+          });
+        }
+
+        function check_progress(group_id, should_update_version) {
+          if (!busy) return;
+          url = `/admin/tools/progress_bar/${group_id}/${should_update_version}/`;
+          console.log(url);
+          fetch(url, {
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+          }).then(function (response) {
+              if (!response.ok) {
+                  progress_bar(1, 'darkred');
+                  busy = false;
+                  throw new Error("Not 2xx response");
+              }
+              response.json().then(function (data) {
+              
+              progress_bar(data['percent'], 'green');
+              
+              console.log(data);
+              if (data['percent'] < 1) {
+                setTimeout(function(){check_progress(group_id, should_update_version);}, 1000);
+              }
+              else {
+                output_messages(data['error_messages'], data['results']);
+              }
+              // TODO Fix this
+              // if (terminated){terminate(group_id); return;}
+            });
+          });
+        }
+
+        function export_json() {
+          if (busy) return;
+          terminated = false;
+          document.getElementById('messages_bar').style.display = 'none';
+          document.getElementById('unordered_list').style.display = 'block';
+          document.getElementById('error').style.display = 'none';
+          document.getElementById('pending').style.display = 'block';
+          fetch("export/json/", {
+              method: "GET",
+          }).then(function (response) {
+              if (!response.ok) {
+                busy = false;
+                document.getElementById('pending').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                throw new Error("Not 2xx response");
+              }
+              response.json().then(function (data) {
+                busy = true;
+                document.getElementById('pending').style.display = 'none';
+                group_id = data["group_id"];
+                should_update_version = data['should_update_version']
+                percent = data['percent'];
+                if (group_id != undefined)
+                  setTimeout(function(){check_progress(group_id, should_update_version);}, 1000);
+                //else if (percent != undefined)
+                //  setTimeout(function(){upload_logos(group_id);}, 1000);
+            });
+          });
+        }
+
+        
+  </script>
+
+{% endblock %}
