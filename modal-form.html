@@ -1,0 +1,105 @@
+<a
+    (click)="open(content)"
+    [attr.aria-expanded]="!isCollapsed"
+    aria-controls="collapseExample"
+>
+    <i-feather
+        name="{{icon}}"
+        class="feather"
+        style="width: 20px"
+    ></i-feather></a
+><ng-template #content let-modal>
+    <div class="modal-header">
+        <h2 class="modal-title">{{this.title}}</h2>
+        <button
+            class="close"
+            color="warn"
+            aria-label="Close"
+            (click)="modal.dismiss('Cross click')"
+        >
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <form
+        class="modal-body"
+        [formGroup]="formGroup"
+        #f="ngForm"
+        (ngSubmit)="onSave(f)"
+        novalidate
+    >
+        <ul *ngIf="errors">
+            <li *ngFor="let error of errors|keyvalue">
+                {{error.key}}:{{error.value|json}}
+            </li>
+        </ul>
+        <div class="d-flex flex-column">
+            <div *ngFor="let input of formjson.components" class="col">
+                <div
+                    *ngIf="['select'].includes(input.input_type)"
+                    class="form-group"
+                >
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{input.name}}</mat-label>
+                        <select
+                            matNativeControl
+                            name="{{input.name}}"
+                            formControlName="{{input.name}}"
+                            required="{{input.required}}"
+                            value="{{input.value}}"
+                        >
+                            <option
+                                *ngFor="let option of input.components"
+                                value="{{option}}"
+                            >
+                                {{option}}
+                            </option>
+                        </select>
+                    </mat-form-field>
+                </div>
+                <div
+                    *ngIf="['text','number'].includes(input.input_type)"
+                    class="form-group"
+                >
+                    <mat-form-field appearance="outline">
+                        <mat-label>{{input.name}}</mat-label
+                        ><input
+                            matInput
+                            formControlName="{{input.name}}"
+                            type="{{input.input_type}}"
+                            class="form-control"
+                            name="{{input.name}}"
+                            pattern="{{input.pattern}}"
+                            placeholder="{{input.placeholder}}"
+                            required="{{input.required}}"
+                            autocomplete="off"
+                        />
+                    </mat-form-field>
+                </div>
+                <div
+                    *ngIf="['checkbox'].includes(input.input_type)"
+                    class="form-group"
+                >
+                    <mat-checkbox
+                        formControlName="{{input.name}}"
+                        class="form-control"
+                        name="{{input.name}}"
+                        required="{{input.required}}"
+                        >{{input.name}}</mat-checkbox
+                    >
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer flex-row-reverse justify-content-between">
+            <button *ngIf="saveMethod!==''" mat-flat-button color="primary">
+                Save
+            </button>
+            <a
+                mat-flat-button
+                color="warn"
+                *ngIf="hasDelete"
+                (click)="deleteItem()"
+                >Delete</a
+            >
+        </div>
+    </form>
+</ng-template>

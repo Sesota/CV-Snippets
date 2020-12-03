@@ -1,0 +1,88 @@
+<div
+    class="section"
+    dir="{{ _window.language.direction }}"
+    [style.textAlign]="_window.language.direction === 'ltr' ? 'left' : 'right'"
+    style="margin-bottom: 100px"
+>
+    <div class="container text-center">
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-8">
+                <h2 class="title">{{ _heading.title }}</h2>
+                <h5 class="description">{{ _heading.text }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="container" *ngFor="let section of _heading.components">
+        <div class="row" style="min-height: 10px; margin-bottom: 50px">
+            <div
+                *ngIf="section.attrs.picture_position === 'top'"
+                class="col-lg-12"
+                style="
+                    background-image: url('../../../assets/img/{{ section.picture_filename }}');
+                    background-size: cover;
+                    background-repeat: no-repeat;
+                    min-height: 400px;
+                "
+            ></div>
+            <div
+                *ngIf="section.attrs.picture_position === 'left'"
+                class="col-lg-6 col-sm-12"
+                style="
+                    background-image: url('../../../assets/img/{{ section.picture_filename }}');
+                    background-size: cover;
+                    background-repeat: no-repeat;
+                    min-height: 400px;
+                "
+            ></div>
+            <div
+                class="text-center"
+                [ngClass]="
+                    ['none', 'top', 'bottom'].includes(section.picture_position)
+                        ? 'col-lg-12'
+                        : 'col-lg-6 col-sm-12'
+                "
+                [style.fontFamily]="
+                    _window.language.code === 'fa-ir'
+                        ? 'yekan-bakh-light'
+                        : 'inherit'
+                "
+            >
+                <h3 class="title">{{ section.title }}</h3>
+                <h5 [style.textAlign]="section.text_align" class="description">
+                    <markdown ngPreserveWhitelines>
+                        {{ section.text }}
+                    </markdown>
+                </h5>
+                <a
+                    *ngIf="section.link"
+                    routerLink="{{ section.link }}"
+                    class="btn btn-primary btn-simple btn-round btn-lg"
+                >
+                    {{ section.link_text }}
+                </a>
+            </div>
+            <div
+                *ngIf="section.attrs.picture_position === 'right'"
+                class="col-lg-6 col-sm-12"
+                style="
+                    background-image: url('../../../assets/img/{{ section.picture_filename }}');
+                    background-size: cover;
+                    background-repeat: no-repeat;
+                    min-height: 400px;
+                "
+            ></div>
+            <div
+                *ngIf="section.attrs.picture_position === 'bottom'"
+                class="col-lg-12"
+                style="
+                    background-image: url('../../../assets/img/{{ section.picture_filename }}');
+                    background-size: cover;
+                    background-repeat: no-repeat;
+                    min-height: 400px;
+                "
+            ></div>
+        </div>
+    </div>
+</div>
+
+<!-- <div class="separator separator-primary"></div> -->

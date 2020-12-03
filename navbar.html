@@ -1,0 +1,118 @@
+<nav
+    class="navbar navbar-expand-lg bg-{{
+        _window.theme
+    }} fixed-top navbar-transparent"
+    (scroll)="onWindowScroll()"
+    color-on-scroll="500"
+>
+    <div class="container">
+        <div class="dropdown button-dropdown">
+            <div ngbDropdown></div>
+        </div>
+        <div class="navbar-translate">
+            <a
+                class="navbar-brand"
+                [routerLink]="['/index']"
+                placement="bottom"
+            >
+                <img
+                    src="../../../assets/img/now-logo.png"
+                    style="max-height: 20px; margin-right: 5px"
+                    alt=""
+                />
+                <p>{{ _navbar?.attrs.brand }}</p>
+            </a>
+            <button
+                class="navbar-toggler"
+                type="button"
+                data-toggle="collapse"
+                data-target="#navbarToggler"
+                aria-controls="navbarTogglerDemo02"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+                (click)="sidebarToggle()"
+            >
+                <span class="navbar-toggler-bar bar1"></span>
+                <span class="navbar-toggler-bar bar2"></span>
+                <span class="navbar-toggler-bar bar3"></span>
+            </button>
+        </div>
+        <div
+            class="collapse navbar-collapse"
+            data-nav-image="assets/img/blurred-image-1.jpg"
+            data-color="blue"
+        >
+            <ul class="navbar-nav ml-auto">
+                <ng-container *ngFor="let item of _navbar?.components">
+                    <li
+                        class="nav-item"
+                        *ngIf="item.item_type === 'single-link'"
+                    >
+                        <a
+                            class="nav-link {{ item.style }}"
+                            rel="tooltip"
+                            title="{{ item.tooltip }}"
+                            data-placement="bottom"
+                            href="{{ item.url }}"
+                            target="_blank"
+                        >
+                            <img
+                                src="../../../assets/icons/{{ item.icon }}"
+                                style="max-height: 20px"
+                                alt=""
+                            />
+                            <p
+                                [ngClass]="
+                                    item.is_minimized
+                                        ? 'd-lg-none d-xl-none'
+                                        : ''
+                                "
+                            >
+                                {{ item.text }}
+                            </p>
+                        </a>
+                    </li>
+                    <li
+                        ngbDropdown
+                        *ngIf="item.item_type === 'dropdown'"
+                        class="nav-item dropdown"
+                        placement="bottom-left"
+                    >
+                        <a
+                            class="nav-link dropdown-toggle"
+                            rel="tooltip"
+                            title="{{ item.tooltip }}"
+                            ngbDropdownToggle
+                        >
+                            <img
+                                src="../../../../src/assets/icons/{{item.icon}}"
+                                style="max-height: 20px; margin-right: 5px"
+                                alt=""
+                            />
+                            <p>{{ item.text }}</p>
+                        </a>
+                        <div
+                            *ngIf="item.dropdown !== undefined"
+                            ngbDropdownMenu
+                        >
+                            <a
+                                *ngFor="let element of item.dropdown.components"
+                                class="dropdown-item"
+                                href="{{ element.url }}"
+                                style="padding-left: 5px"
+                            >
+                                <img
+                                    style="margin-right: 2px"
+                                    src="../../../assets/icons/{{
+                                        element.icon
+                                    }}"
+                                />
+                                <p>{{ element.text }}</p></a
+                            >
+                        </div>
+                    </li>
+                </ng-container>
+            </ul>
+        </div>
+    </div>
+</nav>
